@@ -201,7 +201,7 @@
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
     
     //'304 Not Modified' is an exceptional one
-    if ((![response respondsToSelector:@selector(statusCode)] || [((NSHTTPURLResponse *)response) statusCode] < 400) && [((NSHTTPURLResponse *)response) statusCode] != 304) {
+    if ((![response respondsToSelector:@selector(statusCode)] || [((NSHTTPURLResponse *)response) statusCode] < 400) && [((NSHTTPURLResponse *)response) statusCode] != 304 && ![[((NSHTTPURLResponse *)response) MIMEType] isEqualToString:@"application/json"]) {
         NSInteger expected = response.expectedContentLength > 0 ? (NSInteger)response.expectedContentLength : 0;
         self.expectedSize = expected;
         if (self.progressBlock) {
@@ -358,7 +358,7 @@
         if (self.options & SDWebImageDownloaderIgnoreCachedResponse && responseFromCached) {
             completionBlock(nil, nil, nil, YES);
         }
-        else {
+        else if (self.imageData) {
             UIImage *image = [UIImage sd_imageWithData:self.imageData];
             NSString *key = [[SDWebImageManager sharedManager] cacheKeyForURL:self.request.URL];
             image = [self scaledImageForKey:key image:image];
@@ -373,6 +373,9 @@
             else {
                 completionBlock(image, self.imageData, nil, YES);
             }
+        }
+        else {
+            completionBlock(nil, nil, nil, YES);
         }
     }
     self.completionBlock = nil;
